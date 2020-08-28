@@ -153,7 +153,7 @@ export const RichTextEditor = ({table, recordId, isLocked, handleLockChanged}) =
 	
 	let html = converter.makeHtml(notes);
 
-	const toolbar = 'read | undo redo | removeformat | h1 h2 h3 | bold italic underline | link blockquote | bullist numlist | codesample | fullscreen print help | customImageButton';
+	const toolbar = 'read | undo redo | removeformat | h1 h2 h3 | bold italic underline | customImageButton link blockquote | bullist numlist | codesample | fullscreen print help';
 	const plugins = 'advlist anchor autolink codesample emoticons fullscreen help link lists paste print quickbars searchreplace table textpattern visualblocks';
 
 	const setup = (editor) => {
@@ -247,11 +247,11 @@ export const RichTextEditor = ({table, recordId, isLocked, handleLockChanged}) =
 	      margin="10px 0"
 	    />
 
-		  
+		  {/*
 		    <Box padding="20px">
 		    	{markdown}
 		    </Box>
-	    
+	    */}
 
 	    {
 	    	showImagePicker &&
