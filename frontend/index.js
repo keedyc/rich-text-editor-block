@@ -13,11 +13,6 @@ import {RichTextEditor} from './RichTextEditor';
 import showdown from 'showdown';
 
 const RichTextEditorBlock = () => {
-    // Get the selected record.
-    // Get the (Markdown) value of that record's "Notes" field.
-    // Convert the Markdown into HTML.
-    // Render the HTML
-
 		const [activeTableId, setActiveTableId] = useState();
     const [selectedRecordId, setSelectedRecordId] = useState();
     const [editorIsLocked, setEditorIsLocked] = useState(false);
@@ -26,7 +21,7 @@ const RichTextEditorBlock = () => {
 			let tableId = cursor.activeTableId;
 			let recordId = cursor.selectedRecordIds[0];
 
-			if (editorIsLocked || !recordId) {
+			if (editorIsLocked) {
 				return;
 			}
 
@@ -43,6 +38,10 @@ const RichTextEditorBlock = () => {
 
 		let base = useBase();
 		let table = base.getTableById(cursor.activeTableId);
+
+		if (cursor.selectedRecordIds.length > 0 && !selectedRecordId) {
+			setSelectedRecordId(cursor.selectedRecordIds[0]);
+		}
 
     return (
     	<Fragment>

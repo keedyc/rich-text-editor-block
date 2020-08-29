@@ -3,16 +3,15 @@ import React, {useEffect, useState} from 'react';
 import {
 	Box,
 	Button,
-	ConfirmationDialog,
 	Heading,
 	Loader,
-	Select,
 	Switch,
 	loadCSSFromString,
 	loadScriptFromURLAsync,
 	useRecordById,
 } from '@airtable/blocks/ui';
 
+import {ImagePicker} from './ImagePicker';
 import {Editor} from '@tinymce/tinymce-react';
 // import {sanitize} from './sanitize';
 import showdown from 'showdown';
@@ -97,7 +96,6 @@ export const RichTextEditor = ({table, recordId, isLocked, handleLockChanged}) =
 		let markdown = converter.makeMarkdown(content);
 		markdown = sanitizeMarkdown(markdown);
 		setMarkdown(markdown);
-
 		return;
 	};
 
@@ -114,6 +112,10 @@ export const RichTextEditor = ({table, recordId, isLocked, handleLockChanged}) =
 	}
 
 	const sanitizeMarkdown = (markdown) => {
+		if (!markdown) {
+			return markdown;
+		}
+
 		let sanitized = markdown;
 
 		let commentRegex = new RegExp('<!-- -->', 'g');
@@ -124,6 +126,11 @@ export const RichTextEditor = ({table, recordId, isLocked, handleLockChanged}) =
 
 		let imageRegex = new RegExp('\\]\\(', 'g');
 		sanitized = sanitized.replace(imageRegex, '] (');
+
+		sanitized = sanitized.replace(/\[\ \]/g, '- [ ]');
+		sanitized = sanitized.replace(/\[\x\]/g, '- [x]');
+		sanitized = sanitized.replace(/\n\[\ \]/g, '\n- [ ]');
+		sanitized = sanitized.replace(/\n\[\x\]/g, '\n- [x]');
 
 		return sanitized;
 	}
@@ -148,8 +155,11 @@ export const RichTextEditor = ({table, recordId, isLocked, handleLockChanged}) =
 
 	let record = useRecordById(table, recordId);
 	let notes = record.getCellValue('Notes');
-	notes = notes.replace(/\[\x\]/g, '\n- [x]');
-	notes = notes.replace(/\n\[\ \]/g, '\n- [ ]');
+	if (!notes) {
+		notes = 'Add some notes :)'
+	}
+
+	notes = sanitizeMarkdown(notes);
 	
 	let html = converter.makeHtml(notes);
 
@@ -167,7 +177,6 @@ export const RichTextEditor = ({table, recordId, isLocked, handleLockChanged}) =
 	};
 
 	const init = {
-    height: 'calc(100vh - 24px)',
     plugins: plugins,
     toolbar: toolbar,
     menubar: false,
@@ -188,11 +197,7 @@ export const RichTextEditor = ({table, recordId, isLocked, handleLockChanged}) =
 		return <LoadingSpinner />;
 	}
 
-	const style = {
-		padding: '0 10px',
-	}
-
-	let css = `
+	const css = `
 	.mce-edit-focus,
 	.page-title-input:focus {
 		outline: none;
@@ -203,21 +208,13 @@ export const RichTextEditor = ({table, recordId, isLocked, handleLockChanged}) =
 		overflow: scroll;
 		max-height: calc(100vh - 130px);
 	}
+	.tox-tinymce {
+		flex: 1 1 auto;
+	}
 	`
-
 	loadCSSFromString(css);
 
-	// Image Picker
-	const filesValue = record.getCellValue('Files') || [];
-	const images = filesValue.map(fileObj => ({
-		value: `${fileObj.id} ${fileObj.url}`,
-		label: fileObj.filename,
-	}));
-
-	const initialImageValue = images.length ? images[0].value : null;
-	const [selectedImage, setSelectedImage] = useState(initialImageValue);
-
-	const handleImageConfirmed = () => {
+	const handleImageConfirmed = (selectedImage) => {
 		setShowImagePicker(false);
 		
 		const idAndUrl = selectedImage.split(' ');
@@ -231,15 +228,27 @@ export const RichTextEditor = ({table, recordId, isLocked, handleLockChanged}) =
 		editor.setContent(newContent);
 	};
 
+	const handleImageCanceled = () => {
+		setShowImagePicker(false);
+	}
+
 	return (
-		<Box style={style} as='main' overflow='hidden' top='0'>
+		<Box
+			as='main'
+			style={{
+				height: '100vh',
+				padding: '10px',
+				display: 'flex',
+				flexFlow: 'column',
+			}}
+		>
 			<Button
 				icon="checkboxChecked"
 				onClick={handleNoteSaved}
-				marginTop="10px"
 			>
 				Save
 			</Button>
+
 			<Switch
 	      value={isLocked || false}
 	      onChange={value => handleLockChanged(value)}
@@ -247,39 +256,22 @@ export const RichTextEditor = ({table, recordId, isLocked, handleLockChanged}) =
 	      margin="10px 0"
 	    />
 
-		  {/*
-		    <Box padding="20px">
-		    	{markdown}
-		    </Box>
-	    */}
-
 	    {
 	    	showImagePicker &&
-	    	<ConfirmationDialog
-	    		title="Which image would you like?"
-	    		body={
-	    			<React.Fragment>
-	    				<Select
-	    					options={images}
-	    					value={selectedImage}
-	    					onChange={(newImage) => setSelectedImage(newImage)}
-	    				/>
-	    			</React.Fragment>
-	    		}
-	    		onConfirm={handleImageConfirmed}
-	    		onCancel={() => setShowImagePicker(false)}
+	    	<ImagePicker
+	    		record={record}
+	    		handleImageConfirmed={handleImageConfirmed}
+	    		handleImageCanceled={handleImageCanceled}
 	    	/>
 	    }
 
-			{	/*
+			{/*
 				When using Tiny MCE as a controlled component, use onEditorChange.
 				This stops the cursor from going to the top of the editor when you hit Enter.
 				https://www.tiny.cloud/docs/integrations/react/#usingthetinymcereactcomponentasacontrolledcomponent
-				*/
-			}
+			*/}
 			<Editor
 				id="note-editor"
-				style={style}
 				value={html}
 				init={init}
 				onInit={handleInit}
