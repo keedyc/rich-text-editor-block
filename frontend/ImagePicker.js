@@ -39,18 +39,18 @@ export const ImagePicker = ({
 
 	return (
 		<ConfirmationDialog
-  		title="Choose an image"
-  		body={
-  			<React.Fragment>
-  				<Select
-  					options={images}
-  					value={selectedImage}
-  					onChange={(newImage) => setSelectedImage(newImage)}
-  				/>
-  			</React.Fragment>
-  		}
-  		onConfirm={() => handleImageConfirmed(selectedImage)}
-  		onCancel={handleImageCanceled}
-  	/>
+			title="Choose an image"
+			body={
+				<React.Fragment>
+					<Select
+						options={images}
+						value={selectedImage}
+						onChange={(newImage) => setSelectedImage(newImage)}
+					/>
+				</React.Fragment>
+			}
+			onConfirm={() => handleImageConfirmed(selectedImage)}
+			onCancel={handleImageCanceled}
+		/>
 	)
 }
